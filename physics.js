@@ -54,49 +54,79 @@ const rule = (part1, part2, g) => {
       dy = a.y - b.y;
       d = Math.sqrt(dx * dx + dy * dy);
 
-      F = (g * 1) / d;
+      //F = (g * 1) / d;
+      F = (g * a.mass * b.mass) / Math.pow(d, 2);
+      total_mass = a.mass + b.mass;
       distDiff = a.mass + b.mass - d;
       /*console.log(distDiff, d)
       console.log(a.mass + b.mass)*/
       if (d === 0)
         continue;
 
-      if (distDiff <= 0 && d < 8000) {
-
+      if (distDiff <= 0 && d < 4000) {
         fx += F * dx;
         fy += F * dy;
-      } else if (distDiff > 0) {
+
+      } else if (distDiff > 1) {
         dirX = a.x - b.x;
         dirY = a.y - b.y;
         dist = Math.sqrt(dirX * dirX + dirY * dirY) * -1;
-
         vetorNX = dirX / dist;
         vetorNY = dirY / dist;
-        a.x = a.x - vetorNX * distDiff
-        a.y = a.y - vetorNY * distDiff
+
+        //reposition
+        a.x = a.x - (vetorNX * distDiff) / 2
+        a.y = a.y - (vetorNY * distDiff) / 2
+        b.x = b.x - (vetorNX * distDiff) / 2 * -1
+        b.y = b.y - (vetorNY * distDiff) / 2 * -1
+        
+        //bounce
+        
+        rel_vx = b.vx - a.vx;
+        rel_vy = b.vy - a.vy;
+        rel_vel = ((rel_vx * vetorNX) + (rel_vy * vetorNY))/1.2
+        a.vx += (vetorNX * rel_vel * (2 * b.mass) / total_mass);
+        a.vy += (vetorNY * rel_vel * (2 * b.mass) / total_mass);
+        b.vx -= (vetorNX * rel_vel * (2 * a.mass) / total_mass);
+        b.vy -= (vetorNY * rel_vel * (2 * a.mass) / total_mass);
+        //a.vx *= -1
+        //a.vy *= -1
+        //b.vx *= -1
+        //b.vy *= -1
+        
+        //algum tipo de pressão quanto mais tempo ele passar sem tocar nada vai acumulando a pressão
+        // necessário 3ª lei de newton
+        // de alguma forma setar ele para ser imovel, assim assignar a posição aos 2 ao a e ao b?
       }
     }
 
-    a.vx = (a.vx + fx) / a.mass;
-    a.vy = (a.vy + fy) / a.mass;
+    a.vx = (a.vx) + fx / a.mass;
+    a.vy = (a.vy) + fy / a.mass;
     a.x += a.vx;
     a.y += a.vy;
-    if (a.x <= 0 + 30 + a.mass || a.x >= w - 30 - a.mass) a.x -= a.vx * 3;
-    if (a.y <= 0 + 30 + a.mass || a.y >= h - 30 - a.mass) a.y -= a.vy * 3;
+    if (a.x <= 0 + 10 + a.mass) { a.x = 10 + a.mass; a.vx *= -0.5 }
+    if (a.x >= w - 10 - a.mass) { a.x = w - 10 - a.mass; a.vx *= -0.5 }
+    if (a.y <= 0 + 10 + a.mass) { a.y = 10 + a.mass; a.vy *= -0.5 }
+    if (a.y >= h - 10 - a.mass) { a.y = h - 10 - a.mass; a.vy *= -0.5 }
+    /*
+    if (a.x <= 0 + 150 + a.mass || a.x >= w - 150 - a.mass) a.x -= a.vx - .1 * -1;
+    if (a.y <= 0 + 150 + a.mass || a.y >= h - 150 - a.mass) a.y -= a.vy + .1 * -1;*/
   }
 };
 
-green = create(20, "green", 80);
+green = create(2, "green", 30);
+red = create(0, "red", 30);
 
 
 const desenharCirculo = (x, y) => {
-  const bagun2 = particle(x, y, "aliceblue", 3);
-  //particles.push(bagun2);
-  //green.push(bagun2);
+  const bagun2 = particle(x, y, "green", 30);
+  particles.push(bagun2);
+  green.push(bagun2);
 }
 
 const update = () => {
-  rule(green, green, -.32);
+  rule(green, green, -.1);
+  rule(green, red, -.1);
 
   canvas.clearRect(0, 0, w, h);
   draw(0, 0, "#090909", w);
@@ -108,10 +138,10 @@ const update = () => {
       particles[i].mass
     );
   }
-  //requestAnimationFrame(update);
+  requestAnimationFrame(update);
 };
 update();
-setInterval(() => {
+/*setInterval(() => {
   update();
 
-}, 200);
+}, 200);*/
